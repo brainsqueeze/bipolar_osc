@@ -14,6 +14,7 @@ stop = 1.
 deltaR = 0.25
 
 Dist = spectra() # reads in spectra lists
+
 ###########################
 #  Main computation code  #
 ###########################
@@ -54,7 +55,7 @@ def MakeTables(p, u, n, LogLambda):
    
 
     for x, U, NuEdist, NuMudist in Dist: # x is energy, U is cosine
-        cosine.extend([U])
+        cosine.append(U)
         # the coefficients are from the SU(3) symmetry which was computed in a Mathematica notebook based on the derived tensor constractions
             
         preInt.append((NuEdist - NuMudist)*np.exp(LogLambda)*SineFunc(p, x, u, U, n))
@@ -64,22 +65,14 @@ def MakeTables(p, u, n, LogLambda):
             energy.append(x)
             del cosine[:]
             del preInt[:]
-            #cosine = []
-            #preInt = []
-                
+                            
                     
-    print '---%s seconds---' % (time.time() - start_time)
-    integral = np.trapz(integ, energy)
-
-    del energy[:]
-    del integ[:]
+    #print '---%s seconds---' % (time.time() - start_time)
     del cosine[:]
     del preInt[:]
-    
-    return integral
-                              
-    
+    return np.trapz(integ, energy)
 
+    
 
 def integrate():
     Func = []
@@ -87,7 +80,7 @@ def integrate():
     B = BIH()[0] + np.power(3, -0.5)*BIH()[1]
 
     # initial LogLambda file, re-defined in the loop below
-    LogLambda = [ (p, u, 0) for p in np.arange(-80., 80., 0.2) for u in np.linspace(start, stop, N)]
+    LogLambda = [ (p, u, 0) for p in np.arange(-70., 70., 0.2) for u in np.linspace(start, stop, N)]
 
     for n in range(1,2):
         
@@ -109,11 +102,8 @@ def integrate():
             
 
 def main():
-    #integrate()
-    for p in range(10):
-        print MakeTables(p, 1., 2, 0)
-        
-        
+    integrate()
+            
                                      
     
 if __name__ == '__main__':

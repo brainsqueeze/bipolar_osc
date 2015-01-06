@@ -1,6 +1,5 @@
 from math import *
 import numpy as np
-import time
 
 Le = 4.1*np.power(10.,51.)
 Lebar = 4.3*np.power(10.,51.)
@@ -40,15 +39,15 @@ def fnuMu(x):
 
 def spectra():
     deltaE = 0.2
-    start = -80.
-    stop = 80.
+    start = -70.
+    stop = 70.
 
     Ustart = np.power(1. - np.power((10./40.), 2), 0.5)
     Ustop = 1.
     N = 20.
 
-    a = [(p, u, -fnuEbar(-p), -fnuMu(-p)) for p in np.arange(start, -0.2, deltaE) for u in np.linspace(Ustart, Ustop, N)]
-    a.extend([(p, u, fnuE(p), fnuMu(p)) for p in np.arange(0.2, stop, deltaE) for u in np.linspace(Ustart, Ustop, N)])
+    a = [(p, u, -fnuEbar(-p), -fnuMu(-p)) for p in np.arange(start, 0., deltaE) for u in np.linspace(Ustart, Ustop, N)]
+    a.extend([(p, u, fnuE(p), fnuMu(p)) for p in np.arange(0.2, stop + deltaE, deltaE) for u in np.linspace(Ustart, Ustop, N)])
     a.extend([(0, u, fnuE(0), fnuMu(p)) for u in np.linspace(Ustart, Ustop, N)])
 
     return sorted(a)
@@ -67,4 +66,5 @@ def SineFunc(p, x, u, U, n):
         return 0
     else:
         return (1/u - U)*( 0.05119*np.sin( 0.3793*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) + 0.1225*np.sin( 11.895*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) + 0.0541*np.sin( 12.274*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) )
+
 
