@@ -2,54 +2,36 @@ from math import *
 import numpy as np
 import time
 
+Le = 4.1*np.power(10.,51.)
+Lebar = 4.3*np.power(10.,51.)
+Lmu = 7.9*np.power(10.,51.)
+EeAvg = 9.4
+EeBarAvg = 13.
+EmuAvg = 15.8
+FluxE = Le/EeAvg
+FluxEbar = Lebar/EeBarAvg
+FluxMu = Lmu/EmuAvg
+FluxTot = FluxE + FluxEbar + 4*FluxMu
+
+deltaR = 0.25
 
 ####################
 #  Initial fluxes  #
 ####################
 
 def fnuE(x):
-    Le = 4.1*np.power(10.,51.)
-    Lebar = 4.3*np.power(10.,51.)
-    Lmu = 7.9*np.power(10.,51.)
-    EeAvg = 9.4
-    EeBarAvg = 13.
-    EmuAvg = 15.8
-    FluxE = Le/EeAvg
-    FluxEbar = Lebar/EeBarAvg
-    FluxMu = Lmu/EmuAvg
-    FluxTot = FluxE + FluxEbar + 4*FluxMu
     T = 2.1
     Eta = 3.9
-    
+
     return (FluxE/FluxTot)*np.power(x/EeAvg, 2.)*np.power(1 + np.exp(x/T - Eta), -1)
 
 def fnuEbar(x):
-    Le = 4.1*np.power(10.,51.)
-    Lebar = 4.3*np.power(10.,51.)
-    Lmu = 7.9*np.power(10.,51.)
-    EeAvg = 9.4
-    EeBarAvg = 13.
-    EmuAvg = 15.8
-    FluxE = Le/EeAvg
-    FluxEbar = Lebar/EeBarAvg
-    FluxMu = Lmu/EmuAvg
-    FluxTot = FluxE + FluxEbar + 4*FluxMu
     T = 3.5
     Eta = 2.3
 
     return (FluxEbar/FluxTot)*np.power(x/EeBarAvg, 2.)*np.power(1 + np.exp(x/T - Eta), -1)
 
 def fnuMu(x):
-    Le = 4.1*np.power(10.,51.)
-    Lebar = 4.3*np.power(10.,51.)
-    Lmu = 7.9*np.power(10.,51.)
-    EeAvg = 9.4
-    EeBarAvg = 13.
-    EmuAvg = 15.8
-    FluxE = Le/EeAvg
-    FluxEbar = Lebar/EeBarAvg
-    FluxMu = Lmu/EmuAvg
-    FluxTot = FluxE + FluxEbar + 4*FluxMu
     T = 4.4
     Eta = 2.1
     
@@ -57,8 +39,6 @@ def fnuMu(x):
   
 
 def spectra():
-    Edist = []
-    
     deltaE = 0.2
     start = -80.
     stop = 80.

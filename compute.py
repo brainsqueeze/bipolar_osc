@@ -3,7 +3,7 @@ import numpy as np
 from scrub import *
 import time
 import itertools
-import pickle
+import json
 
 
 R = 10.
@@ -62,19 +62,27 @@ def MakeTables(p, u, n, LogLambda):
         if U == 1.:
             integ.append(np.trapz(preInt, cosine))
             energy.append(x)
-            cosine = []
-            preInt = []
+            del cosine[:]
+            del preInt[:]
+            #cosine = []
+            #preInt = []
                 
                     
-    #print '---%s seconds---' % (time.time() - start_time)
-    return np.trapz(integ, energy)
+    print '---%s seconds---' % (time.time() - start_time)
+    integral = np.trapz(integ, energy)
+
+    del energy[:]
+    del integ[:]
+    del cosine[:]
+    del preInt[:]
+    
+    return integral
                               
     
 
 
 def integrate():
-    counter = 0
-    LogLambda = []
+    Func = []
 
     B = BIH()[0] + np.power(3, -0.5)*BIH()[1]
 
@@ -84,26 +92,27 @@ def integrate():
     for n in range(1,2):
         
         f = open('/home/dave/code/neutrinos/Lambda_files/LogLambda_%d_deltaR.txt' % n, 'wb')
-        Func = []
         for p, u, loglam in LogLambda:
             if u < np.power(1. - np.power((R/(RStar + (n-1)*deltaR)), 2), 0.5):
                 Func.extend([ (p, u, 0) ])
-                #f.write('%0.1f %f %f \r\n' % (p, u, 0))
             else:
                 Func.extend([ (p, u, deltaR*Mu(RStar + (n-1)*deltaR)/(B)*MakeTables(p, u, n, loglam) ) ])
-                #f.write('%0.1f %f %f \r\n' % (p, u, deltaR*Mu(RStar + (n-1)*deltaR)/(BIH()[0] + np.power(3, -0.5)*BIH()[1])*MakeTables(p, u, n, LogLambda[p, u]) ))
+                            
                 
-                
-        LogLambda = []
+        del LogLambda[:]
         LogLambda = Func
+        del Func[:]
 
-        pickle.dump(LogLambda, f)
+        json.dump(LogLambda, f)
         f.close()
 
             
 
 def main():
-    integrate()
+    #integrate()
+    for p in range(10):
+        print MakeTables(p, 1., 2, 0)
+        
         
                                      
     
