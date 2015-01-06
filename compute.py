@@ -74,15 +74,15 @@ def MakeTables(p, u, n, LogLambda):
 
 def integrate():
     Func = []
-
+    
     B = BIH()[0] + np.power(3, -0.5)*BIH()[1]
 
     # initial LogLambda file, re-defined in the loop below
     LogLambda = [ (p, u, 0) for p in np.arange(-70., 70., 0.2) for u in np.linspace(start, stop, N)]
 
-    for n in range(1,2):
+    for n in range(1, 801):
         
-        f = open('/home/dave/code/neutrinos/Lambda_files/LogLambda_%d_deltaR.txt' % n, 'wb')
+        f = open('Lambda_files/LogLambda_%d_deltaR.txt' % n, 'wb')
         for p, u, loglam in LogLambda:
             if u < np.power(1. - np.power((R/(RStar + (n-1)*deltaR)), 2), 0.5):
                 Func.extend([ (p, u, 0) ])
@@ -91,7 +91,7 @@ def integrate():
                             
                 
         del LogLambda[:]
-        LogLambda = Func
+        LogLambda = Func[:]
         del Func[:]
 
         json.dump(LogLambda, f)
