@@ -68,8 +68,6 @@ def MakeTables(p, u, n, LogLambda):
                             
                     
     #print '---%s seconds---' % (time.time() - start_time)
-    del cosine[:]
-    del preInt[:]
     return np.trapz(integ, energy)
 
     
