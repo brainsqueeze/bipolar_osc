@@ -87,7 +87,7 @@ def integrate():
             if u < np.power(1. - np.power((R/(RStar + (n-1)*deltaR)), 2), 0.5):
                 Func.extend([ (p, u, 0) ])
             else:
-                Func.extend([ (p, u, deltaR*Mu(RStar + (n-1)*deltaR)/(B)*MakeTables(p, u, n, loglam) ) ])
+                Func.extend([ (p, u, loglam - deltaR*Mu(RStar + (n-1)*deltaR)/(B)*MakeTables(p, u, n, loglam) ) ])
                             
                 
         del LogLambda[:]
