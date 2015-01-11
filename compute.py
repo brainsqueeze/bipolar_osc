@@ -48,12 +48,7 @@ def BIH():
 def MakeTables(p, u, n, LogLambda):
     start_time = time.time()
     
-    integ = []
-    preInt = []
-    
-    energy = []
-    cosine = []
-   
+    integ, preInt, energy, cosine = [], [], [], []
 
     for x, U, NuEdist, NuMudist, loglambda in itertools.izip(zip(*Dist)[0], zip(*Dist)[1], zip(*Dist)[2], zip(*Dist)[3], zip(*LogLambda)[2]) : # x is energy, U is cosine
         cosine.append(U)
@@ -64,11 +59,10 @@ def MakeTables(p, u, n, LogLambda):
         if U == 1.:
             integ.append(np.trapz(preInt, cosine))
             energy.append(x)
-            del cosine[:]
-            del preInt[:]
+            del cosine[:], preInt[:]
                             
                     
-    #print '---%s seconds---' % (time.time() - start_time)
+    #print p, u, '---%s seconds---' % (time.time() - start_time)
     return np.trapz(integ, energy)
 
     
@@ -80,7 +74,7 @@ def integrate():
 
     # initial LogLambda file, re-defined in the loop below
     LogLambda = [ (p, u, 0) for p in np.arange(-70., 70. + 0.2, 0.2) for u in np.linspace(start, stop, N)]
-
+    
     for n in range(1, 801):
         
         f = open('Lambda_files/LogLambda_%d_deltaR.txt' % n, 'wb')
@@ -98,7 +92,7 @@ def integrate():
         json.dump(LogLambda, f)
         f.close()
 
-            
+                    
 
 def main():
     integrate()

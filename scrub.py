@@ -38,14 +38,10 @@ def fnuMu(x):
   
 
 def spectra():
-    deltaE = 0.2
-    start = -70.
-    stop = 70.
-
-    Ustart = np.power(1. - np.power((10./40.), 2), 0.5)
-    Ustop = 1.
-    N = 20.
-
+    start, stop, deltaE = -70., 70., 0.2
+        
+    Ustart, Ustop, N = np.power(1. - np.power((10./40.), 2), 0.5), 1., 20.
+ 
     a = [(p, u, -fnuEbar(-p), -fnuMu(-p)) for p in np.arange(start, 0., deltaE) for u in np.linspace(Ustart, Ustop, N)]
     a.extend([(p, u, fnuE(p), fnuMu(p)) for p in np.arange(0.2, stop + deltaE, deltaE) for u in np.linspace(Ustart, Ustop, N)])
     a.extend([(0, u, fnuE(0), fnuMu(p)) for u in np.linspace(Ustart, Ustop, N)])
