@@ -51,11 +51,11 @@ def MakeTables(p, u, n, LogLambda):
     x, U, NuEdist, NuMudist = np.array( zip(*Dist) )
     Lambda = np.exp(zip(*LogLambda)[2])
 
-
+    # sets numpy arrays for the integrand
     Integrand = zip( zip(*Dist)[0], zip(*Dist)[1], (NuEdist - NuMudist)*Lambda*SineFunc(p, x, u, U, n) )
-
+    
+    # performs first integral over cosine
     FirstInt = [(zip(*Integrand[x - 20: x])[0][-1], np.trapz(zip(*Integrand[x - 20: x])[2], zip(*Integrand[x - 20: x])[1]) ) for x in range(20, len(Integrand)+20, 20)]
-
 
     #print '---%s seconds---' % (time.time() - start_time)
     return np.trapz(zip(*FirstInt)[1], zip(*FirstInt)[0])
@@ -63,7 +63,7 @@ def MakeTables(p, u, n, LogLambda):
     
 
 def integrate():
-    start_time = time.time()
+    #start_time = time.time()
     Func = []
     
     B = BIH()[0] + np.power(3, -0.5)*BIH()[1]
@@ -84,7 +84,7 @@ def integrate():
 
         json.dump(LogLambda, f)
         f.close()
-        print '---%s seconds---' % (time.time() - start_time)
+        #print '---%s seconds---' % (time.time() - start_time)
 
                     
 
