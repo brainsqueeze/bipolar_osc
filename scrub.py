@@ -41,8 +41,8 @@ def spectra():
     start, stop, deltaE = -70., 70., 0.2
     Ustart, Ustop, N = np.power(1. - np.power((10./40.), 2), 0.5), 1., 20.
 
-    a = [(round(p,1), u, -fnuEbar(-p), -fnuMu(-p)) for p in np.linspace(start, 0.2, round((0 - start)/deltaE, 0)) for u in np.linspace(Ustart, Ustop, N)]
-    a.extend([(round(p,1), u, fnuE(p), fnuMu(p)) for p in np.linspace(0.2, stop, round((stop - 0)/deltaE, 0)) for u in np.linspace(Ustart, Ustop, N)])
+    a = [(round(p, 1), u, -fnuEbar(-p), -fnuMu(-p)) for p in np.linspace(start, 0.2, round((0 - start)/deltaE, 0)) for u in np.linspace(Ustart, Ustop, N)]
+    a.extend([(round(p, 1), u, fnuE(p), fnuMu(p)) for p in np.linspace(0.2, stop, round((stop - 0)/deltaE, 0)) for u in np.linspace(Ustart, Ustop, N)])
     a.extend([(0, u, fnuE(0), fnuMu(p)) for u in np.linspace(Ustart, Ustop, N)])
 
     return sorted(a)

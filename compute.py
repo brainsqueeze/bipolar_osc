@@ -71,7 +71,7 @@ def integrate():
     # initialize LogLambda file
     LogLambda = [ (round(p, 1), u, 0) for p in np.arange(-70., 70. + 0.2, 0.2) for u in np.linspace(start, stop, N)]
    
-    for n in range(1, 2):
+    for n in range(1, 801):
         
         f = open('Lambda_files/LogLambda_%d_deltaR.txt' % n, 'wb')
 
