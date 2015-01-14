@@ -38,16 +38,11 @@ def fnuMu(x):
   
 
 def spectra():
-    deltaE = 0.2
-    start = -70.
-    stop = 70.
+    start, stop, deltaE = -70., 70., 0.2
+    Ustart, Ustop, N = np.power(1. - np.power((10./40.), 2), 0.5), 1., 20.
 
-    Ustart = np.power(1. - np.power((10./40.), 2), 0.5)
-    Ustop = 1.
-    N = 20.
-
-    a = [(p, u, -fnuEbar(-p), -fnuMu(-p)) for p in np.arange(start, 0., deltaE) for u in np.linspace(Ustart, Ustop, N)]
-    a.extend([(p, u, fnuE(p), fnuMu(p)) for p in np.arange(0.2, stop + deltaE, deltaE) for u in np.linspace(Ustart, Ustop, N)])
+    a = [(round(p,1), u, -fnuEbar(-p), -fnuMu(-p)) for p in np.linspace(start, 0.2, round((0 - start)/deltaE, 0)) for u in np.linspace(Ustart, Ustop, N)]
+    a.extend([(round(p,1), u, fnuE(p), fnuMu(p)) for p in np.linspace(0.2, stop, round((stop - 0)/deltaE, 0)) for u in np.linspace(Ustart, Ustop, N)])
     a.extend([(0, u, fnuE(0), fnuMu(p)) for u in np.linspace(Ustart, Ustop, N)])
 
     return sorted(a)
@@ -57,14 +52,30 @@ def spectra():
 def Mu(r):
     mu0 = 0.45*np.power(10., 5)
     R = 10.
-    return (4/3)*mu0*np.power((R/r), 3)
+    return (4./3.)*mu0*np.power((R/r), 3)
+
 
 
 
 def SineFunc(p, x, u, U, n):
-    if any([n == 1, p == 0, x == 0]):
+    if any([n == 1, p == 0]):
+        return 0*x*U
+    else:
+        D = (1/u - U)*( 0.05119*np.sin( 0.3793*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) + 0.1225*np.sin( 11.895*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) + 0.0541*np.sin( 12.274*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) )
+
+        # NaNs can/should be set to 0 in this calculation due to the flux
+        NaNs = np.isnan(D)
+        D[NaNs] = 0
+        return D
+
+
+
+def Euler(u, n, B, loglam, Sum):
+    R, RStar = 10., 40.
+    
+    if u < np.power(1. - np.power((R/(RStar + (n-1)*deltaR)), 2), 0.5):
         return 0
     else:
-        return (1/u - U)*( 0.05119*np.sin( 0.3793*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) + 0.1225*np.sin( 11.895*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) + 0.0541*np.sin( 12.274*(n-1)*deltaR*(1/(p*u) - 1/(x*U)) ) )
+        return loglam - deltaR*Mu(RStar + (n-1)*deltaR)/(B)*Sum
 
 

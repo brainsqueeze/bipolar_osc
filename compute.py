@@ -47,48 +47,35 @@ def BIH():
 
 def MakeTables(p, u, n, LogLambda):
     start_time = time.time()
-    
-    integ = []
-    preInt = []
-    
-    energy = []
-    cosine = []
-   
 
-    for x, U, NuEdist, NuMudist, loglambda in itertools.izip(zip(*Dist)[0], zip(*Dist)[1], zip(*Dist)[2], zip(*Dist)[3], zip(*LogLambda)[2]) : # x is energy, U is cosine
-        cosine.append(U)
-        # the coefficients are from the SU(3) symmetry which was computed in a Mathematica notebook based on the derived tensor constractions
-            
-        preInt.append((NuEdist - NuMudist)*np.exp(loglambda)*SineFunc(p, x, u, U, n))
+    x, U, NuEdist, NuMudist = np.array( zip(*Dist) )
+    Lambda = np.exp(zip(*LogLambda)[2])
 
-        if U == 1.:
-            integ.append(np.trapz(preInt, cosine))
-            energy.append(x)
-            del cosine[:]
-            del preInt[:]
-                            
-                    
+
+    Integrand = zip( zip(*Dist)[0], zip(*Dist)[1], (NuEdist - NuMudist)*Lambda*SineFunc(p, x, u, U, n) )
+
+    FirstInt = [(zip(*Integrand[x - 20: x])[0][-1], np.trapz(zip(*Integrand[x - 20: x])[2], zip(*Integrand[x - 20: x])[1]) ) for x in range(20, len(Integrand)+20, 20)]
+
+
     #print '---%s seconds---' % (time.time() - start_time)
-    return np.trapz(integ, energy)
-
+    return np.trapz(zip(*FirstInt)[1], zip(*FirstInt)[0])
+   
     
 
 def integrate():
+    start_time = time.time()
     Func = []
     
     B = BIH()[0] + np.power(3, -0.5)*BIH()[1]
 
-    # initial LogLambda file, re-defined in the loop below
-    LogLambda = [ (p, u, 0) for p in np.arange(-70., 70. + 0.2, 0.2) for u in np.linspace(start, stop, N)]
-
-    for n in range(1, 801):
+    # initialize LogLambda file
+    LogLambda = [ (round(p, 1), u, 0) for p in np.arange(-70., 70. + 0.2, 0.2) for u in np.linspace(start, stop, N)]
+   
+    for n in range(1, 2):
         
         f = open('Lambda_files/LogLambda_%d_deltaR.txt' % n, 'wb')
-        for p, u, loglam in LogLambda:
-            if u < np.power(1. - np.power((R/(RStar + (n-1)*deltaR)), 2), 0.5):
-                Func.extend([ (p, u, 0) ])
-            else:
-                Func.extend([ (p, u, loglam - deltaR*Mu(RStar + (n-1)*deltaR)/(B)*MakeTables(p, u, n, LogLambda) ) ])
+
+        Func = [(p, u, Euler(u, n, B, loglam, MakeTables(p, u, n, LogLambda)) ) for p, u, loglam in LogLambda ]
                             
                 
         del LogLambda[:]
@@ -97,8 +84,9 @@ def integrate():
 
         json.dump(LogLambda, f)
         f.close()
+        print '---%s seconds---' % (time.time() - start_time)
 
-            
+                    
 
 def main():
     integrate()
