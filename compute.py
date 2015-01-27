@@ -51,14 +51,24 @@ def MakeTables(p, u, n, LogLambda):
     x, U, NuEdist, NuMudist = np.array( zip(*Dist) )
     Lambda = np.exp(zip(*LogLambda)[2])
 
-    # sets numpy arrays for the integrand
-    Integrand = zip( zip(*Dist)[0], zip(*Dist)[1], (NuEdist - NuMudist)*Lambda*SineFunc(p, x, u, U, n) )
-    
-    # performs first integral over cosine
-    FirstInt = [(zip(*Integrand[x - 20: x])[0][-1], np.trapz(zip(*Integrand[x - 20: x])[2], zip(*Integrand[x - 20: x])[1]) ) for x in range(20, len(Integrand)+20, 20)]
+    # Sets numpy arrays for the integrand
+    IntegrandArray = np.array(zip( zip(*Dist)[0], zip(*Dist)[1], (NuEdist - NuMudist)*Lambda*SineFunc(p, x, u, U, n) ))
+
+    """
+    Casts values into a matrix with U = cosine indexing the columns
+    and the energy indexing the rows (ie. IntegrandArray[0, 19] corresponds
+    to energy = -70 MeV and U = cosine = 1).
+    """
+    IntegrandMat = IntegrandArray[:, 2].reshape((len(IntegrandArray)/20, 20))
+
+    """
+    Performs first integral over cosine by performing the trapezoidal
+    algorithm over each row of the matrix.
+    """
+    CosInt = np.trapz(IntegrandMat, dx=np.diff(U)[0], axis=1)
 
     #print '---%s seconds---' % (time.time() - start_time)
-    return np.trapz(zip(*FirstInt)[1], zip(*FirstInt)[0])
+    return np.trapz(CosInt, dx=0.2)
    
     
 
