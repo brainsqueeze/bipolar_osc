@@ -1,7 +1,7 @@
 bipolar_osc
 ===========
 
-Code for computing the bipolar oscillations in core-collapse supernovae.
+Code for computing bipolar neutrino oscillations from analytic ansatz in core-collapse supernovae. This is based on the work in [https://inspirehep.net/record/1419546?ln=en](https://inspirehep.net/record/1419546?ln=en).
 
 Before executing, do
 ```sh
