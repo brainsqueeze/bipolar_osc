@@ -25,12 +25,12 @@ class SNThermodynamics(object):
         self.EtaEbar = 2.3
         self.EtaMu = 2.1
 
-        self.mu_0 = 0.45 * np.power(10., 5)
+        self.mu_0 = 0.45e5
         self.R = 10.
         self.deltaR = 0.25
         self.RStar = 40.
 
-        self.u_start = (1. - (self.R / self.RStar)**2)**0.5
+        self.u_start = (1. - (self.R / self.RStar) ** 2) ** 0.5
         self.u_stop = 1.
         self.N = 20
 
@@ -39,6 +39,9 @@ class SNThermodynamics(object):
         self.delta_e = 0.2
 
         self.Spectra = self.spectra()
+
+        self.x, self.u_prime, self.nu_e_dist, self.nu_mu_dist = np.array(list(zip(*self.Spectra)), dtype=np.float32)
+        # self.u_prime = np.unique(self.u_prime)
 
     def f_nu_e(self, x):
         """
@@ -56,7 +59,7 @@ class SNThermodynamics(object):
         :return: initial energy spectrum (numpy array)
         """
         return (self.FluxEbar / self.FluxTot) * np.power(x / self.EeBarAvg, 2.) * \
-               np.power(1 + np.exp(x / self.TEbar - self.EtaEbar), -1)
+            np.power(1 + np.exp(x / self.TEbar - self.EtaEbar), -1)
 
     def f_nu_mu(self, x):
         """
@@ -71,14 +74,28 @@ class SNThermodynamics(object):
         """
         :return: total initial spectrum - including all flavors - as a function of energy and cosine of zenith (array)
         """
-        a = [(round(p, 1), u, -self.f_nu_e_bar(-p), -self.f_nu_mu(-p))
-             for p in np.linspace(self.E_start, 0.2, round((0 - self.E_start) / self.delta_e, 0))
-             for u in np.linspace(self.u_start, self.u_stop, self.N)]
-        a.extend([(round(p, 1), u, self.f_nu_e(p), self.f_nu_mu(p))
-                  for p in np.linspace(0.2, self.E_stop, round((self.E_stop - 0) / self.delta_e, 0))
-                  for u in np.linspace(self.u_start, self.u_stop, self.N)])
-        a.extend([(0, u, self.f_nu_e(0), self.f_nu_mu(p))
-                  for u in np.linspace(self.u_start, self.u_stop, self.N)])
+
+        a = [(p, u, -self.f_nu_e_bar(-p), self.f_nu_mu(-p))
+             for p, u in itertools.product(
+                np.linspace(start=self.E_start, stop=0.2, num=int((0 - self.E_start) / self.delta_e)),
+                np.linspace(start=self.u_start, stop=self.u_stop, num=self.N)
+            )
+        ]
+
+        a.extend(
+            [
+                (p, u, self.f_nu_e(p), self.f_nu_mu(p))
+                for p, u in itertools.product(
+                    np.linspace(start=0.2, stop=self.E_stop, num=int(self.E_stop / self.delta_e)),
+                    np.linspace(start=self.u_start, stop=self.u_stop, num=self.N)
+                )
+            ]
+        )
+
+        a.extend(
+            [(0, u, self.f_nu_e(0), self.f_nu_mu(0)) for u in np.linspace(self.u_start, self.u_stop, self.N)]
+        )
+
         return sorted(a)
 
     def mu(self, r):
@@ -87,7 +104,7 @@ class SNThermodynamics(object):
         :param r: radius
         :return: Background neutrino density (float)
         """
-        return (4./3.) * self.mu_0 * np.power((self.R / r), 3)
+        return (4 / 3) * self.mu_0 * ((self.R / r) ** 3)
 
 
 class Neutrino(SNThermodynamics):
@@ -117,81 +134,124 @@ class Neutrino(SNThermodynamics):
         a = 7.5 * np.power(10., -5) / (7.5 * np.power(10., -5) - 2.43 * np.power(10., -3))
 
         # 3rd component of the vacuum B-vec
-        b3 = s13**2 - s23**2 * c13**2 + \
-             a * (s12**2 * c13**2 - (c12 * c23 - s12 * s13 * s23 * c_cp)**2 - (s12 * s13 * s23 * s_cp)**2)
+        b3 = s13 ** 2 - s23 ** 2 * c13 ** 2 + \
+            a * (s12 ** 2 * c13 ** 2 - (c12 * c23 - s12 * s13 * s23 * c_cp) ** 2 - (s12 * s13 * s23 * s_cp) ** 2)
 
         # 8th component of the vacuum B-vec
-        b8 = 3**0.5 * (s13**2 + s23**2 * c13**2 +
-                       a * (s12**2 * c13**2 + (c12 * c23 - s12 * s13 * s23 * c_cp)**2 + (s12 * s13 * s23 * s_cp)**2) -
-                       (2. / 3.) * (1 + a))
+        b8 = 3 ** 0.5 * (
+                s13 ** 2 + s23 ** 2 * c13 ** 2 +
+                a * (s12 ** 2 * c13 ** 2 + (c12 * c23 - s12 * s13 * s23 * c_cp)**2 + (s12 * s13 * s23 * s_cp) ** 2) -
+                (2 / 3) * (1 + a)
+        )
         return b3, b8
 
-    def sine_func(self, p, x, u, u_prime, n):
+    def sine_func(self, energy_momentum, x_momentum, cosine, u_prime, n):
         """
         Computes sine function which appears inside of the main evolution integral.  All coefficients are computed from
         various tensor contractions with the SU(3) structure tensor.
-        :param p: un-integrated neutrino energy (float)
-        :param x: background neutrino energy to be integrated (float)
-        :param u: un-integrate propagation cosine of zenith angle
+        :param energy_momentum: un-integrated neutrino energy (float)
+        :param x_momentum: background neutrino energy to be integrated (float)
+        :param cosine: un-integrate propagation cosine of zenith angle
         :param u_prime: cosine of zenith angle of background neutrino(s)
         :param n: integer which evolves the solution outward, radially in discrete steps
         :return: sine function expansion of vacuum oscillation terms (numpy array)
         """
-        if any([n == 1, p == 0]):
-            return 0 * x * u_prime
-        else:
-            d = (1/u - u_prime) * (
-                0.05119 * np.sin(0.3793 * (n-1) * self.deltaR * (1 / (p * u) - 1 / (x * u_prime))) +
-                0.1225 * np.sin(11.895 * (n-1) * self.deltaR * (1 / (p * u) - 1 / (x * u_prime))) +
-                0.0541 * np.sin(12.274 * (n-1) * self.deltaR * (1 / (p * u) - 1 / (x * u_prime)))
-            )
-            nans = np.isnan(d)  # NaNs can/should be set to 0 in this calculation due to the flux
-            d[nans] = 0
-            return d
 
-    def euler(self, u, n, b_orthogonal, log_lam, integral):
+        if n == 1:
+            return np.zeros_like(cosine)
+
+        # if any([n == 1, energy_momentum == 0]):
+        #     return 0 * x_momentum * u_prime
+
+        ratio = (1 / (energy_momentum * cosine) - 1 / (x_momentum * u_prime))
+        ratio[energy_momentum == 0] = 0
+
+        d = (1 / cosine - u_prime) * (
+            0.05119 * np.sin(0.3793 * (n - 1) * self.deltaR * ratio) +
+            0.12250 * np.sin(11.895 * (n - 1) * self.deltaR * ratio) +
+            0.05410 * np.sin(12.274 * (n - 1) * self.deltaR * ratio)
+        )
+
+        # NaNs can/should be set to 0 in this calculation due to the flux
+        d[np.isnan(d)] = 0
+        return d
+
+    def euler(self, cosine, n, b_orthogonal, log_lam, integral):
         """
         Solution of one iteration of the Euler method for solving the differential equation of motion.
-        :param u: un-integrate propagation cosine of zenith angle
+        :param cosine: un-integrate propagation cosine of zenith angle
         :param n: integer which evolves the solution outward, radially in discrete steps
         :param b_orthogonal: orthogonal component of the vacuum oscillation "magnetic field" vector in SU(3) space
         :param log_lam: logarithm of lambda function which controls collective oscillations
         :param integral: results of Riemannian integration at each step
         :return: solution to EOMs at each radius and angle
         """
-        if u < np.power(1. - np.power((self.R / (self.RStar + (n-1) * self.deltaR)), 2), 0.5):
-            return 0
-        else:
-            return log_lam - self.deltaR * self.mu(self.RStar + (n-1) * self.deltaR) / b_orthogonal * integral
 
-    def make_tables(self, p, u, n, log_lambda):
+        if cosine < np.power(1. - np.power((self.R / (self.RStar + (n - 1) * self.deltaR)), 2), 0.5):
+            return 0
+
+        return log_lam - self.deltaR * self.mu(self.RStar + (n-1) * self.deltaR) / b_orthogonal * integral
+
+    def vectorized_make_tables(self, previous_solution, n_step):
+        log_lambda = previous_solution[:, -1]
+        lambda_func = np.exp(log_lambda)
+
+        spectra = lambda_func * self.sine_func(
+            energy_momentum=previous_solution[:, 0],
+            x_momentum=self.x,
+            cosine=previous_solution[:, 1],
+            u_prime=self.u_prime,
+            n=n_step
+        )
+        spectra = spectra[:, None]
+        spectra = (self.nu_e_dist - self.nu_mu_dist) * spectra
+
+        integrand_array = spectra.reshape(spectra.shape[0] // self.N, self.N, spectra.shape[1])
+        # integrand_array = spectra.reshape(spectra.shape[0], spectra.shape[1] // self.N, self.N)
+
+        # # Casts values into a matrix with u_prime = cosine indexing the columns, and the energy indexing the rows
+        # # (ie. integrand_array[0, 19] corresponds to energy -70 MeV and u_prime = cosine = 1
+        # integrand_array = integrand_array[:, 2].reshape(-1, self.N)
+
+        # Performs first integral over cosine by performing the trapezoidal algorithm over each row of the matrix.
+        # cos_int = np.trapz(integrand_array, dx=np.diff(self.u_prime)[0], axis=1)
+        cos_int = np.trapz(integrand_array, dx=np.diff(np.unique(self.u_prime))[0], axis=1)
+
+        assert isinstance(cos_int, np.ndarray)
+        cos_int[np.isnan(cos_int)] = 0
+        return np.trapz(cos_int, dx=0.2, axis=0)
+
+    def make_tables(self, energy_momentum, cosine, n, log_lambda):
         """
         Creates array which will be integrated.
-        :param p: un-integrated neutrino energy (float)
-        :param u: un-integrate propagation cosine of zenith angle
+        :param energy_momentum: un-integrated neutrino energy (float)
+        :param cosine: un-integrate propagation cosine of zenith angle
         :param n: integer which evolves the solution outward, radially in discrete steps
         :param log_lambda: logarithm of the lambda function from the previous solution
         :return: Integrated function (numpy array)
         """
-        x, u_prime, nu_e_dist, nu_mu_dist = np.array(zip(*self.Spectra))
-        _, _, log_lam = zip(*log_lambda)
+
+        log_lam = log_lambda[:, -1]
         lambda_func = np.exp(log_lam)
 
         # Sets numpy arrays for the integrand
-        integrand_array = np.array(zip(x, u_prime,
-                                       (nu_e_dist - nu_mu_dist) * lambda_func * self.sine_func(p, x, u, u_prime, n)))
+        spectra = (self.nu_e_dist - self.nu_mu_dist) * lambda_func * self.sine_func(
+            energy_momentum,
+            self.x,
+            cosine,
+            self.u_prime,
+            n
+        )
+        # integrand_array = np.hstack((self.x[:, None], self.u_prime[:, None], spectra[:, None]))
 
-        """
-        Casts values into a matrix with u_prime = cosine indexing the columns
-        and the energy indexing the rows (ie. integrand_array[0, 19] corresponds
-        to energy = -70 MeV and u_prime = cosine = 1).
-        """
-        integrand_mat = integrand_array[:, 2].reshape((len(integrand_array) / 20, 20))
-        """
-        Performs first integral over cosine by performing the trapezoidal
-        algorithm over each row of the matrix.
-        """
-        cos_int = np.trapz(integrand_mat, dx=np.diff(u_prime)[0], axis=1)
+        # Casts values into a matrix with u_prime = cosine indexing the columns, and the energy indexing the rows
+        # (ie. integrand_array[0, 19] corresponds to energy -70 MeV and u_prime = cosine = 1
+        # integrand_array = integrand_array[:, 2].reshape(-1, self.N)
+        integrand_array = spectra.reshape(-1, self.N)
 
+        # Performs first integral over cosine by performing the trapezoidal algorithm over each row of the matrix.
+        cos_int = np.trapz(integrand_array, dx=np.diff(self.u_prime)[0], axis=1)
+
+        assert isinstance(cos_int, np.ndarray)
         cos_int[np.isnan(cos_int)] = 0
         return np.trapz(cos_int, dx=0.2)
